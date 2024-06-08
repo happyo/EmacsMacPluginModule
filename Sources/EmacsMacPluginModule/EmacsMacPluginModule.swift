@@ -25,6 +25,7 @@ class EmacsMacPluginModule: Module {
     var env: Environment?
     var redView: NSView? = nil
     var animationTimer: Timer? = nil
+    private var redViewTag = 999999
 
     func Init(_ env: Environment) throws {
         try env.defun("swift-create-window-info") { (env: Environment) -> WindowInfo in
@@ -78,12 +79,21 @@ class EmacsMacPluginModule: Module {
 
     private func setupRedView(x: Int, y: Int, cursorWidth: Int, cursorHeight: Int) {
         guard let view = NSApp.mainWindow?.contentView else { return }
-        let redView = NSView(frame: NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight))
-        redView.wantsLayer = true
-        redView.layer?.backgroundColor = NSColor.red.cgColor
-        view.addSubview(redView)
-        self.redView = redView
+        // 检查是否需要更新 redView
+        if let existingRedView = view.viewWithTag(redViewTag) {
+            self.redView = existingRedView
+            self.redView?.frame = NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight)
+        } else {
+            let redView = NSView(frame: NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight))
+            redView.wantsLayer = true
+            redView.layer?.backgroundColor = NSColor.red.cgColor
+            view.addSubview(redView)
+            
+            redViewTag = redView.tag
+            self.redView = redView
+        }
     }
+
 
     private func scheduleAnimation(toX x: Int, toY y: Int) {
         animationTimer?.invalidate()
@@ -94,7 +104,8 @@ class EmacsMacPluginModule: Module {
     
     private func performJellyAnimation(toX x: Int, toY y: Int) {
         guard let view = NSApp.mainWindow?.contentView, let redView = self.redView else { return }
-        
+
+        self.redView?.alphaValue = 1
         // 获取当前起点和终点
         let startPoint = redView.frame.origin
         let endPoint = CGPoint(x: x, y: y)
@@ -116,6 +127,7 @@ class EmacsMacPluginModule: Module {
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             redView.animator().setFrameOrigin(endPoint)
         }) {
+            self.redView?.alphaValue = 0
             shadowLayer.removeFromSuperlayer()
         }
     }
