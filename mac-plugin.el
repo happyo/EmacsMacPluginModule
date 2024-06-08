@@ -16,7 +16,7 @@
   (let ((project-root (expand-file-name (locate-dominating-file default-directory "Package.swift"))))
     (unless project-root
       (error "Not in macos project"))
-    (unless (file-exists-p (file-name-concat project-root "macos.el"))
+    (unless (file-exists-p (file-name-concat project-root "mac-plugin.el"))
       (error "Not in macos project"))
     project-root))
 
@@ -29,12 +29,42 @@
   (interactive)
   (add-hook 'post-command-hook #'update-window-info))
 
+(defun macos--emacs-point-x ()
+  "Return the x coordinate at point, adjusted for visual modes like Olivetti."
+  (let ((pos (window-absolute-pixel-position)))
+    (car pos)))
+
+(defun macos--emacs-point-y ()
+  "Return the y coordinate at point, adjusted for visual modes like Olivetti."
+  (let ((pos (window-absolute-pixel-position)))
+    (cdr pos)))
+
+(defun emacs-cursor-width ()
+  "Return the approximate cursor width in pixels."
+  (let ((char-width (frame-char-width)))
+    ;; You might adjust this depending on your cursor type.
+    char-width))
+
+(defun emacs-cursor-height ()
+  "Return the cursor height in pixels."
+  (let ((char-height (frame-char-height)))
+    ;; This returns the height of a character cell. Adjust if your cursor is a bar.
+    char-height))
+
 (defun update-window-info ()
   "Update the window information."
   (interactive)
-  (let ((x (macos--emacs-point-x))
-        (y (macos--emacs-point-y)))
-    (macos-module--update-window-info x y)))
+  (let (
+        (model (swift-create-window-info))
+        (x (macos--emacs-point-x))
+        (y (macos--emacs-point-y))
+        (cursor-width 10)
+        (cursor-height 30))
+    (swift-set-window-info-x model x)
+    (swift-set-window-info-y model y)
+    (swift-set-window-info-width model cursor-width)
+    (swift-set-window-info-height model cursor-height)
+    (macos-module--update-window-info model)))
 
 
 (provide 'mac-plugin)
