@@ -27,6 +27,11 @@ class EmacsMacPluginModule: Module {
     var animationTimer: Timer? = nil
     private var redViewTag = 999999
 
+    deinit {
+        animationTimer?.invalidate()
+        redView?.removeFromSuperview()
+    }
+
     func Init(_ env: Environment) throws {
         try env.defun("swift-create-window-info") { (env: Environment) -> WindowInfo in
             return WindowInfo()
@@ -36,20 +41,20 @@ class EmacsMacPluginModule: Module {
         // try env.defun("swift-get-window-info-x") { (model: WindowInfo) in model.x }
         // try env.defun("swift-get-window-info-x") { (model: WindowInfo) in model.x }
 
-        try env.defun("swift-set-window-info-x") { (env: Environment, model: WindowInfo, x: Int) in
-            model.x = x
+        try env.defun("swift-set-window-info-x") { (env: Environment, model: WindowInfo, x: Int?) in
+            model.x = x ?? 0
         }
 
-        try env.defun("swift-set-window-info-y") { (env: Environment, model: WindowInfo, y: Int) in
-            model.y = y
+        try env.defun("swift-set-window-info-y") { (env: Environment, model: WindowInfo, y: Int?) in
+            model.y = y ?? 0
         }
 
-        try env.defun("swift-set-window-info-width") { (env: Environment, model: WindowInfo, width: Int) in
-            model.width = width
+        try env.defun("swift-set-window-info-width") { (env: Environment, model: WindowInfo, width: Int?) in
+            model.width = width ?? 0
         }
 
-        try env.defun("swift-set-window-info-height") { (env: Environment, model: WindowInfo, height: Int) in
-            model.height = height
+        try env.defun("swift-set-window-info-height") { (env: Environment, model: WindowInfo, height: Int?) in
+            model.height = height ?? 0
         }
 
         try env.defun("macos-module--clear-window-info") { (env: Environment) in
@@ -62,16 +67,15 @@ class EmacsMacPluginModule: Module {
             Update the window information.
             """
         ) { (env: Environment, model: WindowInfo) in
-            guard let view = NSApp.mainWindow?.contentView else { return }
-            
+      guard let view = NSApp.mainWindow?.contentView else { return }
             let realX = model.x
             let realY = Int(view.bounds.height) - model.y
             
             let fixedX = realX
-            let fixedY = realY + model.height
-            if let _ = self.redView {
+            let fixedY = realY + model.height + model.height / 2
+      if let _ = self.redView {
                 self.scheduleAnimation(toX: fixedX, toY: fixedY)
-            } else {
+      } else {
                 self.setupRedView(x: fixedX, y: fixedY, cursorWidth: model.width, cursorHeight: model.height)
             }
         }
@@ -82,6 +86,7 @@ class EmacsMacPluginModule: Module {
         // 检查是否需要更新 redView
         if let existingRedView = view.viewWithTag(redViewTag) {
             self.redView = existingRedView
+            
             self.redView?.frame = NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight)
         } else {
             let redView = NSView(frame: NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight))
@@ -93,7 +98,6 @@ class EmacsMacPluginModule: Module {
             self.redView = redView
         }
     }
-
 
     private func scheduleAnimation(toX x: Int, toY y: Int) {
         animationTimer?.invalidate()
@@ -127,7 +131,7 @@ class EmacsMacPluginModule: Module {
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             redView.animator().setFrameOrigin(endPoint)
         }) {
-            self.redView?.alphaValue = 0
+            self.redView?.alphaValue = 0.3
             shadowLayer.removeFromSuperlayer()
         }
     }

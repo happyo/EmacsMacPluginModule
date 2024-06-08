@@ -51,6 +51,11 @@
     ;; This returns the height of a character cell. Adjust if your cursor is a bar.
     char-height))
 
+(defun clear-window-info ()
+  "Clear the window information."
+    (interactive)
+  (macos-module--clear-window-info))
+
 (defun update-window-info ()
   "Update the window information."
   (interactive)
@@ -58,13 +63,15 @@
         (model (swift-create-window-info))
         (x (macos--emacs-point-x))
         (y (macos--emacs-point-y))
-        (cursor-width 10)
-        (cursor-height 30))
+        (cursor-width (emacs-cursor-width))
+        (cursor-height (emacs-cursor-height)))
+    ;; (message "Debug: x=%s, y=%s, width=%d, height=%d" x y cursor-width cursor-height) ; Debug output
     (swift-set-window-info-x model x)
     (swift-set-window-info-y model y)
     (swift-set-window-info-width model cursor-width)
     (swift-set-window-info-height model cursor-height)
     (macos-module--update-window-info model)))
+
 
 
 (provide 'mac-plugin)
