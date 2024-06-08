@@ -131,7 +131,7 @@ class EmacsMacPluginModule: Module {
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             redView.animator().setFrameOrigin(endPoint)
         }) {
-            self.redView?.alphaValue = 0.3
+            self.redView?.alphaValue = 0
             shadowLayer.removeFromSuperlayer()
         }
     }
