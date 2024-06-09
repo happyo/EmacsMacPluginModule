@@ -97,5 +97,15 @@
       (error "Module file %s does not exist" module-path))
     (module-load module-path)))
 
+(defun mac-plugin-set-cursor-color (color)
+  "Set the cursor color to COLOR."
+  (interactive "sEnter cursor color (hex): ")
+  (swift-set-cursor-color color))
+
+(defun mac-plugin-set-shadow-opacity (opacity)
+  "Set the shadow opacity to OPACITY."
+  (interactive "nEnter shadow opacity (0.0 to 1.0): ")
+  (swift-set-shadow-opacity opacity))
+
 (provide 'mac-plugin)
 ;;; mac-plugin.el ends here

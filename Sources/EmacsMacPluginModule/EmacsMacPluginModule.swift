@@ -7,13 +7,15 @@ class EmacsMacPluginModule: Module {
     let isGPLCompatible = true
 
     var env: Environment?
-    var redView: NSView? = nil
+    var cursorView: NSView? = nil
     var animationTimer: Timer? = nil
-    private var redViewTag = 999999
+    private var cursorViewTag = 999999
+    private var cursorColor: NSColor = .red
+    private var shadowOpacity: Double = 0.8
 
     deinit {
         animationTimer?.invalidate()
-        redView?.removeFromSuperview()
+        cursorView?.removeFromSuperview()
     }
 
     func Init(_ env: Environment) throws {
@@ -38,7 +40,20 @@ class EmacsMacPluginModule: Module {
         }
 
         try env.defun("macos-module--clear-window-info") { (env: Environment) in
-            self.redView?.removeFromSuperview()
+            self.cursorView?.removeFromSuperview()
+        }
+
+        try env.defun("swift-set-cursor-color") { (env: Environment, colorString: String) in
+            if let color = NSColor(hexString: colorString) {
+                self.cursorColor = color
+                if let v = self.cursorView {
+                    v.layer?.backgroundColor = color.cgColor
+                }
+            }
+        }
+
+        try env.defun("swift-set-shadow-opacity") { (env: Environment, opacity: Double) in
+            self.shadowOpacity = opacity
         }
         
         try env.defun(
@@ -53,7 +68,7 @@ class EmacsMacPluginModule: Module {
             
             let fixedX = realX
             let fixedY = realY + model.height + model.height / 2
-      if let _ = self.redView {
+      if let _ = self.cursorView {
                 self.scheduleAnimation(toX: fixedX, toY: fixedY)
       } else {
                 self.setupRedView(x: fixedX, y: fixedY, cursorWidth: model.width, cursorHeight: model.height)
@@ -63,19 +78,19 @@ class EmacsMacPluginModule: Module {
 
     private func setupRedView(x: Int, y: Int, cursorWidth: Int, cursorHeight: Int) {
         guard let view = NSApp.mainWindow?.contentView else { return }
-        // 检查是否需要更新 redView
-        if let existingRedView = view.viewWithTag(redViewTag) {
-            self.redView = existingRedView
+        // 检查是否需要更新 cursorView
+        if let existingRedView = view.viewWithTag(cursorViewTag) {
+            self.cursorView = existingRedView
             
-            self.redView?.frame = NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight)
+            self.cursorView?.frame = NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight)
         } else {
-            let redView = NSView(frame: NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight))
-            redView.wantsLayer = true
-            redView.layer?.backgroundColor = NSColor.red.cgColor
-            view.addSubview(redView)
+            let cursorView = NSView(frame: NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight))
+            cursorView.wantsLayer = true
+            cursorView.layer?.backgroundColor = self.cursorColor.cgColor
+            view.addSubview(cursorView)
             
-            redViewTag = redView.tag
-            self.redView = redView
+            cursorViewTag = cursorView.tag
+            self.cursorView = cursorView
         }
     }
 
@@ -87,13 +102,13 @@ class EmacsMacPluginModule: Module {
     }
     
     private func performJellyAnimation(toX x: Int, toY y: Int) {
-        guard let view = NSApp.mainWindow?.contentView, let redView = self.redView else { return }
+        guard let view = NSApp.mainWindow?.contentView, let cursorView = self.cursorView else { return }
 
-        self.redView?.alphaValue = 1
+        self.cursorView?.alphaValue = 1
         // 获取当前起点和终点
-        let startPoint = redView.frame.origin
+        let startPoint = cursorView.frame.origin
         let endPoint = CGPoint(x: x, y: y)
-        let cursorSize = redView.frame.size
+        let cursorSize = cursorView.frame.size
         
         // 创建一个三角形路径
         let trianglePath = createTrianglePath(from: startPoint, to: endPoint, size: cursorSize)
@@ -101,17 +116,17 @@ class EmacsMacPluginModule: Module {
         // 创建一个残影视图
         let shadowLayer = CAShapeLayer()
         shadowLayer.path = trianglePath.cgPath
-        shadowLayer.fillColor = redView.layer?.backgroundColor
-        shadowLayer.opacity = 0.5 // 初始不透明度为 0.5
+        shadowLayer.fillColor = cursorView.layer?.backgroundColor
+        shadowLayer.opacity = Float(self.shadowOpacity)
         view.layer?.addSublayer(shadowLayer)
         
         // 为红色视图添加移动动画
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.1
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
-            redView.animator().setFrameOrigin(endPoint)
+            cursorView.animator().setFrameOrigin(endPoint)
         }) {
-            self.redView?.alphaValue = 0
+            self.cursorView?.alphaValue = 0
             shadowLayer.removeFromSuperlayer()
         }
     }
