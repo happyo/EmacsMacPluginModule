@@ -1,7 +1,5 @@
 # EmacsMacPluginModule
 
-[English README](README.en.md) | [中文 README](README.zh.md)
-
 `EmacsMacPluginModule` is a macOS plugin for Emacs that implements dynamic cursor effects and more, exclusively for macOS. This plugin leverages `module-load` to load a `.dylib` written in Swift, facilitating interaction between Emacs and Swift. It uses the implementation approach from [SavchenkoValeriy/emacs-swift-module](https://github.com/SavchenkoValeriy/emacs-swift-module) and draws on [xenodium/EmacsMacOSModule](https://github.com/xenodium/EmacsMacOSModule) for applying these techniques. The cursor animation effects are inspired by the [manateelazycat/holo-layer](https://github.com/manateelazycat/holo-layer.git) project.
 
 ## Installation
