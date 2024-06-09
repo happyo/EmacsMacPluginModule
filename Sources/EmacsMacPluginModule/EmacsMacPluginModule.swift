@@ -3,22 +3,6 @@
 import AppKit
 import EmacsSwiftModule
 
-class WindowInfo: OpaquelyEmacsConvertible {
-    var x: Int = 0
-    var y: Int = 0
-    var width: Int = 0
-    var height: Int = 0
-
-    init() {}
-
-    init(x: Int, y: Int, width: Int, height: Int) {
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-    }
-}
-
 class EmacsMacPluginModule: Module {
     let isGPLCompatible = true
 
@@ -33,27 +17,23 @@ class EmacsMacPluginModule: Module {
     }
 
     func Init(_ env: Environment) throws {
-        try env.defun("swift-create-window-info") { (env: Environment) -> WindowInfo in
-            return WindowInfo()
+        try env.defun("swift-create-window-info") { (env: Environment) -> NSWindowInfoModel in
+            return NSWindowInfoModel()
         }
-        // try env.defun("swift-get-window-info-x") { (model: WindowInfo) in model.x }
-        // try env.defun("swift-get-window-info-x") { (model: WindowInfo) in model.x }
-        // try env.defun("swift-get-window-info-x") { (model: WindowInfo) in model.x }
-        // try env.defun("swift-get-window-info-x") { (model: WindowInfo) in model.x }
 
-        try env.defun("swift-set-window-info-x") { (env: Environment, model: WindowInfo, x: Int?) in
+        try env.defun("swift-set-window-info-x") { (env: Environment, model: NSWindowInfoModel, x: Int?) in
             model.x = x ?? 0
         }
 
-        try env.defun("swift-set-window-info-y") { (env: Environment, model: WindowInfo, y: Int?) in
+        try env.defun("swift-set-window-info-y") { (env: Environment, model: NSWindowInfoModel, y: Int?) in
             model.y = y ?? 0
         }
 
-        try env.defun("swift-set-window-info-width") { (env: Environment, model: WindowInfo, width: Int?) in
+        try env.defun("swift-set-window-info-width") { (env: Environment, model: NSWindowInfoModel, width: Int?) in
             model.width = width ?? 0
         }
 
-        try env.defun("swift-set-window-info-height") { (env: Environment, model: WindowInfo, height: Int?) in
+        try env.defun("swift-set-window-info-height") { (env: Environment, model: NSWindowInfoModel, height: Int?) in
             model.height = height ?? 0
         }
 
@@ -66,7 +46,7 @@ class EmacsMacPluginModule: Module {
             with: """
             Update the window information.
             """
-        ) { (env: Environment, model: WindowInfo) in
+        ) { (env: Environment, model: NSWindowInfoModel) in
       guard let view = NSApp.mainWindow?.contentView else { return }
             let realX = model.x
             let realY = Int(view.bounds.height) - model.y
@@ -147,33 +127,6 @@ class EmacsMacPluginModule: Module {
         path.line(to: topPoint)
         path.line(to: bottomPoint)
         path.close()
-        
-        return path
-    }
-}
-
-extension NSBezierPath {
-    var cgPath: CGPath {
-        let path = CGMutablePath()
-        var points = [CGPoint](repeating: .zero, count: 3)
-        
-        for i in 0..<elementCount {
-            let type = element(at: i, associatedPoints: &points)
-            switch type {
-            case .moveTo:
-                path.move(to: points[0])
-            case .lineTo:
-                path.addLine(to: points[0])
-            case .cubicCurveTo:
-                path.addCurve(to: points[2], control1: points[0], control2: points[1])
-            case .closePath:
-                path.closeSubpath()
-            case .quadraticCurveTo:
-                path.addQuadCurve(to: points[1], control: points[0])
-            @unknown default:
-                break
-            }
-        }
         
         return path
     }
