@@ -16,16 +16,19 @@
 (defun macos-module-dev-reload ()
   "Rebuild and reload native module."
   (interactive)
-  (compile (format "swift build && %s -ne '(module-load \"%s\")'"
-                   (executable-find "emacsclient")
-                   (macos--built-module-path))))
+  (let ((default-directory macos-project-root))
+    (compile (format "swift build && %s -ne '(module-load \"%s\")'"
+                     (executable-find "emacsclient")
+                     (macos--built-module-path)))))
 
 (defun macos-module-build-release ()
   "Rebuild and reload native module."
   (interactive)
-  (compile (format "swift build -c release && %s -ne '(module-load \"%s\")'"
-                   (executable-find "emacsclient")
-                   (macos--built-release-path))))
+  (let ((default-directory macos-project-root))
+    (compile (format "swift build -c release && %s -ne '(module-load \"%s\")'"
+                     (executable-find "emacsclient")
+                     (macos--built-release-path)))))
+
 
 (defun macos--built-module-path ()
   "Return the path to the built module."
