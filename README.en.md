@@ -24,7 +24,11 @@
    (add-to-list 'load-path "~/.emacs.d/site-lisp/EmacsMacPluginModule")
 
    (require 'mac-plugin)
-
+   
+   ;; Need disable tool-bar
+   ;;(when (fboundp 'tool-bar-mode)
+   ;;  (tool-bar-mode -1))
+   
    ;; If the downloaded repository directory is different from the above, you can specify the actual directory of the repository with macos-project-root
    (mac-plugin-load-release)
    (atmosphere-enable)

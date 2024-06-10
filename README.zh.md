@@ -24,7 +24,11 @@
    (add-to-list 'load-path "~/.emacs.d/site-lisp/EmacsMacPluginModule")
 
    (require 'mac-plugin)
-
+   
+   ;; 需要禁用 tool-bar
+   ;;(when (fboundp 'tool-bar-mode)
+   ;;  (tool-bar-mode -1))
+   
    ;; 如果下载的仓库目录不是上面的，可以自己指定macos-project-root为仓库实际的目录
    (mac-plugin-load-release)
    (atmosphere-enable)
