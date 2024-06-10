@@ -11,6 +11,10 @@
   :type 'string
   :group 'mac-plugin)
 
+(defcustom mac-plugin-cursor-block-commands '("watch-other-window-up" "watch-other-window-down" "self-insert-command")
+  "Cursor animation is disabled if the current command matches `mac-plugin-cursor-block-commands'."
+  :type 'list)
+
 (defvar macos-lib-name "libEmacsMacPluginModule.dylib")
 
 (defun macos-module-dev-reload ()
@@ -29,7 +33,6 @@
                      (executable-find "emacsclient")
                      (macos--built-release-path)))))
 
-
 (defun macos--built-module-path ()
   "Return the path to the built module."
   (expand-file-name (file-name-concat macos-project-root ".build" "debug" macos-lib-name)))
@@ -38,10 +41,18 @@
   "Return the path to the built module."
   (expand-file-name (file-name-concat macos-project-root ".build" "release" macos-lib-name)))
 
+(defun mac-plugin-cursor-is-block-command-p ()
+  (member (format "%s" this-command) mac-plugin-cursor-block-commands))
+
+(defun atmosphere-update-window-info ()
+  "Update window information unless inserting text."
+  (unless (mac-plugin-cursor-is-block-command-p)
+    (update-window-info)))
+
 (defun atmosphere-enable ()
-  "Enable monitoring of cursor and frame changes."
+  "Enable monitoring of cursor movements and other changes, but not text insertion."
   (interactive)
-  (add-hook 'post-command-hook #'update-window-info))
+  (add-hook 'post-command-hook #'atmosphere-update-window-info))
 
 (defun atmosphere-disable ()
     "Disable monitoring of cursor and frame changes."
