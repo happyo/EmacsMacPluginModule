@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
     .package(
       url: "https://github.com/SavchenkoValeriy/emacs-swift-module.git",
-      revision: "c776706c9338b8ba72a76a2128fd89bd4ac4269e")
+      from: "1.3.5")
   ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
