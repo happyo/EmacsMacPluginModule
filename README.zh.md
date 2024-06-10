@@ -29,7 +29,7 @@
    (mac-plugin-load-release)
    (atmosphere-enable)
    (mac-plugin-set-cursor-color "#fcc800")
-   (mac-plugin-set-shadow-opacity 1)
+   (mac-plugin-set-shadow-opacity 1.0)
    ```
 
 3. emacs中手动调用M-x， 执行build dylib的命令， 只需要 build 一次就够了：

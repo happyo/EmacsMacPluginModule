@@ -34,7 +34,7 @@
    (mac-plugin-load-release)
    (atmosphere-enable)
    (mac-plugin-set-cursor-color "#fcc800")
-   (mac-plugin-set-shadow-opacity 1)
+   (mac-plugin-set-shadow-opacity 1.0)
    ```
 
 3. Manually invoke M-x in Emacs and execute the command to build the dylib, which only needs to be done once:
