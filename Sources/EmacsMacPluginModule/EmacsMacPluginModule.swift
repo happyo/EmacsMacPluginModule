@@ -108,11 +108,11 @@ class EmacsMacPluginModule: Module {
             let relativePoint = FrameHelper.relativePoint(from: NSPoint(x: model.x, y: model.y), window: window, screen: screen)
 
             let fixedX = Int(relativePoint.x)
-            let fixedY = Int(relativePoint.y)
+            let fixedY = Int(relativePoint.y) - model.height
             
-      if let _ = self.cursorView {
+            if let _ = self.cursorView {
                 self.scheduleAnimation(toX: fixedX, toY: fixedY)
-      } else {
+            } else {
                 self.setupRedView(x: fixedX, y: fixedY, cursorWidth: model.width, cursorHeight: model.height)
             }
         }
@@ -128,6 +128,7 @@ class EmacsMacPluginModule: Module {
         } else {
             let cursorView = NSView(frame: NSRect(x: x, y: y, width: cursorWidth, height: cursorHeight))
             cursorView.wantsLayer = true
+            cursorView.layer?.cornerRadius = 4
             cursorView.layer?.backgroundColor = self.cursorColor.cgColor
             view.addSubview(cursorView)
             
@@ -176,17 +177,56 @@ class EmacsMacPluginModule: Module {
     // 创建三角形路径的辅助方法
     private func createTrianglePath(from startPoint: CGPoint, to endPoint: CGPoint, size: CGSize) -> NSBezierPath {
         let path = NSBezierPath()
-        path.move(to: startPoint)
+
+        // Calculate direction vector
+        let dx = endPoint.x - startPoint.x
+        let dy = endPoint.y - startPoint.y
+
+        if abs(dx) > abs(dy) { // Horizontal direction
+            if dx > 0 { // Right direction
+                let topPoint = CGPoint(x: endPoint.x, y: endPoint.y + size.height)
+                let bottomPoint = CGPoint(x: endPoint.x, y: endPoint.y)
+                let fixedStartPoint = startPoint
+                path.move(to: fixedStartPoint)
         
-        let topPoint = CGPoint(x: endPoint.x, y: endPoint.y + size.height)
-        let bottomPoint = CGPoint(x: endPoint.x, y: endPoint.y)
+                path.line(to: topPoint)
+                path.line(to: bottomPoint)
+            } else { // Left direction
+                let topPoint = CGPoint(x: endPoint.x + size.width, y: endPoint.y + size.height)
+                let bottomPoint = CGPoint(x: endPoint.x + size.width, y: endPoint.y)
+
+                let fixedStartPoint = NSPoint(x: startPoint.x + size.width, y: startPoint.y)
+                path.move(to: fixedStartPoint)
+                
+                path.line(to: topPoint)
+                path.line(to: bottomPoint)
+            }
+        } else { // Vertical direction
+            if dy > 0 { // Up direction
+                let leftPoint = CGPoint(x: endPoint.x, y: endPoint.y)
+                let rightPoint = CGPoint(x: endPoint.x + size.width, y: endPoint.y)
+
+                let fixedStartPoint = startPoint
+                path.move(to: fixedStartPoint)
         
-        path.line(to: topPoint)
-        path.line(to: bottomPoint)
+                path.line(to: leftPoint)
+                path.line(to: rightPoint)
+            } else { // Down direction
+                let leftPoint = CGPoint(x: endPoint.x, y: endPoint.y + size.height)
+                let rightPoint = CGPoint(x: endPoint.x + size.width, y: endPoint.y + size.height)
+
+                let fixedStartPoint = startPoint
+                path.move(to: fixedStartPoint)
+        
+                path.line(to: leftPoint)
+                path.line(to: rightPoint)
+            }
+        }
+
         path.close()
-        
         return path
     }
+
 }
 
 func createModule() -> Module { EmacsMacPluginModule() }
