@@ -107,5 +107,13 @@
   (interactive "nEnter shadow opacity (0.0 to 1.0): ")
   (swift-set-shadow-opacity opacity))
 
+(defun mac-plugin-test-print-window-info ()
+  "Call the swift-test-print-window-info function in Swift to print window information."
+  (interactive)
+  (let ((x (macos--emacs-point-x))
+        (y (macos--emacs-point-y)))
+    (swift-test-print-window-info x y)))
+
+
 (provide 'mac-plugin)
 ;;; mac-plugin.el ends here

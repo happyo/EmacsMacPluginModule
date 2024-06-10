@@ -55,6 +55,44 @@ class EmacsMacPluginModule: Module {
         try env.defun("swift-set-shadow-opacity") { (env: Environment, opacity: Double) in
             self.shadowOpacity = opacity
         }
+
+        try env.defun("swift-test-print-window-info") { (env: Environment, x: Int, y: Int) in
+            guard let window = NSApp.mainWindow, let screen = NSScreen.main else {
+                try env.funcall("message", with: "No main window found")
+                return
+            }
+    
+            let windowFrame = window.frame
+            let contentFrame = window.contentRect(forFrameRect: windowFrame)
+            let screenHeight = screen.frame.height
+
+            let windowInfo = """
+    Window Frame: \(windowFrame)
+    Content Frame: \(contentFrame)
+    Screen Height: \(screenHeight)
+    """
+    
+            try env.funcall("message", with: windowInfo)
+
+            let locationInfo = """
+             x: \(x), y: \(y)
+            """
+            try env.funcall("message", with: locationInfo)
+
+            let relativePoint = FrameHelper.relativePoint(from: NSPoint(x: x, y: y), window: window, screen: screen)
+
+            let fixedLocationInfo = """
+             fixed x: \(relativePoint.x), fixed y: \(relativePoint.y)
+            """
+
+            try env.funcall("message", with: fixedLocationInfo)
+
+            let fixedView = NSView(frame: NSRect(x: relativePoint.x, y: relativePoint.y, width: 5, height: 5))
+            fixedView.wantsLayer = true
+            fixedView.layer?.backgroundColor = NSColor.red.cgColor
+
+            window.contentView?.addSubview(fixedView)
+        }
         
         try env.defun(
             "macos-module--update-window-info",
@@ -62,12 +100,16 @@ class EmacsMacPluginModule: Module {
             Update the window information.
             """
         ) { (env: Environment, model: NSWindowInfoModel) in
-      guard let view = NSApp.mainWindow?.contentView else { return }
-            let realX = model.x
-            let realY = Int(view.bounds.height) - model.y
+            guard let window = NSApp.mainWindow, let screen = NSScreen.main else {
+                try env.funcall("message", with: "No main window found")
+                return
+            }
+
+            let relativePoint = FrameHelper.relativePoint(from: NSPoint(x: model.x, y: model.y), window: window, screen: screen)
+
+            let fixedX = Int(relativePoint.x)
+            let fixedY = Int(relativePoint.y)
             
-            let fixedX = realX
-            let fixedY = realY + model.height + model.height / 2
       if let _ = self.cursorView {
                 self.scheduleAnimation(toX: fixedX, toY: fixedY)
       } else {
