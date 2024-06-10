@@ -86,6 +86,16 @@ Set the shadow opacity (e.g., set to `1`):
 (mac-plugin-set-shadow-opacity 1)
 ```
 
+### Commands to Suppress Cursor Animation
+
+**`mac-plugin-cursor-block-commands`** Customization
+
+This option allows you to specify a list of Emacs commands during which cursor animations should be suppressed. This feature is especially useful for preventing animations triggered by routine commands, such as typing, which typically do not require visual feedback. The default configuration is as follows and generally does not need to be modified:
+
+```emacs-lisp
+(setq mac-plugin-cursor-block-commands '("watch-other-window-up" "watch-other-window-down" "self-insert-command"))
+```
+
 ## Contributing
 
 We welcome issues and requests, as well as pull requests to contribute your code!

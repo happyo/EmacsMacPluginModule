@@ -83,6 +83,16 @@
 (mac-plugin-set-shadow-opacity 1)
 ```
 
+### 设置不显示动画的command
+
+**`mac-plugin-cursor-block-commands`** 自定义配置
+
+此选项允许您指定在执行某些 Emacs 命令时应该抑制光标动画。这一功能特别适用于当您需要阻止因常规命令（如打字）而触发动画时，这些命令通常不需要视觉反馈。默认的配置如下，一般情况下不需要设置：
+
+```emacs-lisp
+(setq mac-plugin-cursor-block-commands '("watch-other-window-up" "watch-other-window-down" "self-insert-command"))
+```
+
 ## 贡献
 
 欢迎提交问题和请求，也欢迎发送 Pull Request 来贡献您的代码！
