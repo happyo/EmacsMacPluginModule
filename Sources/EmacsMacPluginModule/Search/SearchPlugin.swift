@@ -6,8 +6,13 @@ import EmacsSwiftModule
 
 class SearchPlugin: BasePlugin {
     var searchField: NSSearchField? = nil
-
+    var env: Environment? = nil
+    let searchDirectory = "~/.emacs.d/" // 设置要搜索的目录路径
+    var errorView: NSTextView? = nil
+    
     public override func initFunctions(_ env: Environment) throws {
+        self.env = env
+        
         try genTestFunc(env)
     }
 
@@ -18,39 +23,45 @@ class SearchPlugin: BasePlugin {
                 return
             }
 
-            let x = 100
-            let y = 100
-    
-            let windowFrame = window.frame
-            let contentFrame = window.contentRect(forFrameRect: windowFrame)
-            let screenHeight = screen.frame.height
-
-            let windowInfo = """
-    Window Frame: \(windowFrame)
-    Content Frame: \(contentFrame)
-    Screen Height: \(screenHeight)
-    """
-    
-            try env.funcall("message", with: windowInfo)
-
-            let locationInfo = """
-             x: \(x), y: \(y)
-            """
-            try env.funcall("message", with: locationInfo)
-
-            let relativePoint = FrameHelper.relativePoint(from: NSPoint(x: x, y: y), window: window, screen: screen)
-
-            let fixedLocationInfo = """
-             fixed x: \(relativePoint.x), fixed y: \(relativePoint.y)
-            """
-
-            try env.funcall("message", with: fixedLocationInfo)
-
             let searchField = NSSearchField(frame: NSRect(x: 300, y: 200, width: 200, height: 30))
             searchField.placeholderString = "Search"
             searchField.delegate = self
             window.contentView?.addSubview(searchField)
             self.searchField = searchField
+
+            let errorView = NSTextView(frame: NSRect(x: 300, y: 100, width: 200, height: 30))
+            errorView.string = "Error View"
+            window.contentView?.addSubview(errorView)
+            self.errorView = errorView
+            
+            // self.executeFdCommand(with: "mini")
+
+        }
+    }
+    
+private func executeFdCommand(with searchText: String) {
+        let process = Process()
+        process.launchPath = "/opt/homebrew/bin/fd" // 确认 fd 的路径
+        process.arguments = [searchText]
+        process.currentDirectoryPath = searchDirectory // 设置工作目录
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+
+        let fileHandle = pipe.fileHandleForReading
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            let data = fileHandle.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+
+            DispatchQueue.main.async {
+                self.errorView?.string = output
+            }
+        } catch {
+            print("Error executing fd command: \(error)")
         }
     }
 }
@@ -58,6 +69,7 @@ class SearchPlugin: BasePlugin {
 extension SearchPlugin: NSSearchFieldDelegate {
     func controlTextDidChange(_ obj: Notification) {
         guard let searchField = searchField else { return }
-        print(searchField.stringValue)
+        let searchText = searchField.stringValue
+        executeFdCommand(with: searchText)
     }
 }
