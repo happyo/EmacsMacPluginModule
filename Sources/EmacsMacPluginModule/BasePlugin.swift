@@ -4,7 +4,7 @@
 import AppKit
 import EmacsSwiftModule
 
-class BasePlugin {
+class BasePlugin: NSObject {
     public func initFunctions(_ env: Environment) throws {
         
     }

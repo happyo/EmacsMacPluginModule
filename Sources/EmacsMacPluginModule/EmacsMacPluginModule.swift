@@ -8,9 +8,11 @@ class EmacsMacPluginModule: Module {
 
     var env: Environment?
     let cursorPlugin = CursorPlugin()
+    let searchPlugin = SearchPlugin()
 
     func Init(_ env: Environment) throws {
         try cursorPlugin.initFunctions(env)
+        try searchPlugin.initFunctions(env)
     }
 }
 

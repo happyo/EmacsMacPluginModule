@@ -125,6 +125,10 @@
         (y (macos--emacs-point-y)))
     (swift-test-print-window-info x y)))
 
+(defun mac-plugin-test-add-search-bar ()
+  "Call the swift-test-add-search-bar function in Swift to add a search bar."
+  (interactive)
+  (swift-search-add-bar))
 
 (provide 'mac-plugin)
 ;;; mac-plugin.el ends here
