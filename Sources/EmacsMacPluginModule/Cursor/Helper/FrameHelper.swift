@@ -12,7 +12,7 @@ class FrameHelper {
 
         // transform to screen coordinates
         let transformedX = emacsPoint.x
-        let transformedY = screenHeight - emacsPoint.y
+        let transformedY = emacsPoint.y
 
         // transform to conent relative coordinates
         let relativeX = transformedX - contentFrame.origin.x

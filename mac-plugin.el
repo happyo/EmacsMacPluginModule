@@ -67,8 +67,11 @@
 
 (defun macos--emacs-point-y ()
   "Return the y coordinate at point, adjusted for visual modes like Olivetti."
-  (let ((pos (window-absolute-pixel-position)))
-    (cdr pos)))
+  (let* ((position (window-absolute-pixel-position))
+         (y (cdr position)))
+    (if (display-graphic-p)
+        (- (x-display-pixel-height) y)
+      y)))
 
 (defun emacs-cursor-width ()
   "Return the approximate cursor width in pixels."
