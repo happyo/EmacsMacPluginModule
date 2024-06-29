@@ -58,7 +58,7 @@
     "Disable monitoring of cursor and frame changes."
     (interactive)
     (clear-window-info)
-    (remove-hook 'post-command-hook #'update-window-info))
+    (remove-hook 'post-command-hook #'atmosphere-update-window-info))
 
 (defun macos--emacs-point-x ()
   "Return the x coordinate at point, adjusted for visual modes like Olivetti."
