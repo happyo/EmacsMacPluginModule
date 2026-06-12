@@ -8,9 +8,11 @@ class EmacsMacPluginModule: Module {
 
     var env: Environment?
     let cursorPlugin = CursorPlugin()
+    let markdownPreviewPlugin = MarkdownPreviewPlugin()
 
     func Init(_ env: Environment) throws {
         try cursorPlugin.initFunctions(env)
+        try markdownPreviewPlugin.initFunctions(env)
     }
 }
 
