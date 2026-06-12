@@ -109,3 +109,8 @@ xcuserdata
 
 release/
 # End of https://www.toptal.com/developers/gitignore/api/xcode,swiftpm,swift
+
+# Swift module build artifacts
+*.o
+*.d
+*.swiftdeps

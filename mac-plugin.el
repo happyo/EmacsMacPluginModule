@@ -118,6 +118,19 @@
   (interactive "nEnter shadow opacity (0.0 to 1.0): ")
   (swift-set-shadow-opacity opacity))
 
+(defun mac-plugin-set-trail-decay (fast slow)
+  "Set cursor trail decay seconds.
+FAST controls the leading corners, SLOW the trailing corners.
+Smaller values make the jelly snap back faster.  Kitty defaults: 0.1 / 0.4."
+  (interactive "nFast decay (e.g. 0.1): \nnSlow decay (e.g. 0.4): ")
+  (swift-set-trail-decay fast slow))
+
+(defun mac-plugin-set-trail-threshold (cells)
+  "Set minimum cursor movement (in CELLS, Manhattan distance) to start the trail.
+0 disables the threshold so every movement animates."
+  (interactive "nThreshold in cells (kitty default 2, 0 disables): ")
+  (swift-set-trail-threshold cells))
+
 (defun mac-plugin-test-print-window-info ()
   "Call the swift-test-print-window-info function in Swift to print window information."
   (interactive)
