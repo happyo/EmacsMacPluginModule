@@ -36,9 +36,9 @@ final class MarkdownPreviewPlugin: BasePlugin {
     /// True once the shell HTML (CSS + empty body) has finished loading and it
     /// is safe to push content via JavaScript.
     private var shellLoaded = false
-    /// Latest markdown awaiting render — set while the shell is still loading,
-    /// flushed in `webView(_:didFinish:)`.
-    private var pendingMarkdown: String?
+    /// Latest rendered HTML fragment awaiting display — set while the shell is
+    /// still loading, flushed in `webView(_:didFinish:)`.
+    private var pendingHTML: String?
     private var theme: Theme = .dark
     /// Width of the preview pane in points.
     private var preferredWidth: CGFloat = 600
@@ -59,6 +59,23 @@ final class MarkdownPreviewPlugin: BasePlugin {
             with: "Render MARKDOWN into the existing preview, preserving scroll position."
         ) { (env: Environment, markdown: String) in
             self.updateMarkdown(markdown)
+        }
+
+        try env.defun(
+            "swift-preview-open-html",
+            with: """
+            Open (or focus) the preview pane and display a pre-rendered HTML
+            BODY fragment. Use this for formats Emacs renders itself (e.g. Org).
+            """
+        ) { (env: Environment, html: String) in
+            self.openHTML(html)
+        }
+
+        try env.defun(
+            "swift-preview-update-html",
+            with: "Display a pre-rendered HTML BODY fragment, preserving scroll position."
+        ) { (env: Environment, html: String) in
+            self.updateHTML(html)
         }
 
         try env.defun(
@@ -97,7 +114,7 @@ final class MarkdownPreviewPlugin: BasePlugin {
         runOnMain {
             self.ensureWebView()
             self.layoutWebView()
-            self.render(markdown: markdown)
+            self.display(html: self.renderHTMLBody(from: markdown))
         }
     }
 
@@ -105,7 +122,22 @@ final class MarkdownPreviewPlugin: BasePlugin {
         runOnMain {
             // No web view yet means the user never opened a preview; ignore.
             guard self.webView != nil else { return }
-            self.render(markdown: markdown)
+            self.display(html: self.renderHTMLBody(from: markdown))
+        }
+    }
+
+    private func openHTML(_ html: String) {
+        runOnMain {
+            self.ensureWebView()
+            self.layoutWebView()
+            self.display(html: html)
+        }
+    }
+
+    private func updateHTML(_ html: String) {
+        runOnMain {
+            guard self.webView != nil else { return }
+            self.display(html: html)
         }
     }
 
@@ -116,7 +148,7 @@ final class MarkdownPreviewPlugin: BasePlugin {
             self.hostView = nil
             self.navigationDelegate = nil
             self.shellLoaded = false
-            self.pendingMarkdown = nil
+            self.pendingHTML = nil
         }
     }
 
@@ -198,13 +230,13 @@ final class MarkdownPreviewPlugin: BasePlugin {
 
     // MARK: - Rendering
 
-    private func render(markdown: String) {
-        let html = renderHTMLBody(from: markdown)
-
+    /// Push a rendered HTML fragment into the web view, preserving scroll
+    /// position. Defers until the shell finishes loading.
+    private func display(html: String) {
         guard let webView = webView else { return }
         guard shellLoaded else {
-            // Shell still loading; remember the latest markdown and flush later.
-            pendingMarkdown = markdown
+            // Shell still loading; remember the latest HTML and flush later.
+            pendingHTML = html
             return
         }
 
@@ -337,9 +369,9 @@ final class MarkdownPreviewPlugin: BasePlugin {
 
     fileprivate func shellDidLoad() {
         shellLoaded = true
-        if let pending = pendingMarkdown {
-            pendingMarkdown = nil
-            render(markdown: pending)
+        if let pending = pendingHTML {
+            pendingHTML = nil
+            display(html: pending)
         }
     }
 

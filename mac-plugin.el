@@ -146,6 +146,13 @@ Smaller values make the jelly snap back faster.  Kitty defaults: 0.1 / 0.4."
   :type 'number
   :group 'mac-plugin)
 
+(defcustom mac-plugin-preview-org-idle-delay 0.5
+  "Seconds of idle time before the Org preview refreshes after an edit.
+Org export is heavier than Markdown rendering, so this defaults higher
+to avoid stutter while typing in large Org files."
+  :type 'number
+  :group 'mac-plugin)
+
 (defcustom mac-plugin-markdown-preview-width 600
   "Width in pixels of the preview pane docked on the right."
   :type 'integer
@@ -228,31 +235,58 @@ which is fine for a rough follow."
   "Return the current buffer's contents as a string for previewing."
   (buffer-substring-no-properties (point-min) (point-max)))
 
+(defun mac-plugin-preview--org-p ()
+  "Non-nil when the current buffer should be previewed as Org."
+  (derived-mode-p 'org-mode))
+
+(defun mac-plugin-preview--idle-delay ()
+  "Return the debounce delay appropriate for the current buffer's format."
+  (if (mac-plugin-preview--org-p)
+      mac-plugin-preview-org-idle-delay
+    mac-plugin-markdown-preview-idle-delay))
+
+(defun mac-plugin-preview--org-to-html ()
+  "Export the current Org buffer to an HTML body fragment.
+Returns nil if Org export is unavailable."
+  (when (require 'ox-html nil t)
+    (let ((org-export-with-toc nil)
+          (org-export-with-section-numbers nil)
+          ;; Body only; our shell page supplies <html>/<head>/CSS.
+          (org-export-show-temporary-export-buffer nil))
+      (org-export-string-as (mac-plugin-markdown--buffer-string) 'html t))))
+
 (defun mac-plugin-markdown--refresh ()
-  "Push the current buffer's contents into the preview pane."
+  "Push the current buffer's contents into the preview pane.
+Markdown is rendered natively by Swift; Org is exported to HTML by
+Emacs and pushed as a pre-rendered fragment."
   (when (buffer-live-p (current-buffer))
-    (swift-markdown-preview-update (mac-plugin-markdown--buffer-string))))
+    (if (mac-plugin-preview--org-p)
+        (let ((html (mac-plugin-preview--org-to-html)))
+          (when html
+            (swift-preview-update-html html)))
+      (swift-markdown-preview-update (mac-plugin-markdown--buffer-string)))))
 
 (defun mac-plugin-markdown--schedule-refresh (&rest _)
   "Debounced refresh hook for `after-change-functions'.
-Cancels any pending timer and reschedules a refresh after
-`mac-plugin-markdown-preview-idle-delay' seconds of idle time."
+Cancels any pending timer and reschedules a refresh after the
+format-appropriate idle delay."
   (when mac-plugin-markdown--timer
     (cancel-timer mac-plugin-markdown--timer))
   (let ((buffer (current-buffer)))
     (setq mac-plugin-markdown--timer
           (run-with-idle-timer
-           mac-plugin-markdown-preview-idle-delay nil
+           (mac-plugin-preview--idle-delay) nil
            (lambda ()
              (when (buffer-live-p buffer)
                (with-current-buffer buffer
                  (mac-plugin-markdown--refresh))))))))
 
 (defun mac-plugin-markdown-preview ()
-  "Open a live Markdown preview of the current buffer, docked on the right.
-Emacs reserves a blank side window on the right and the native preview
-pane is drawn over it, so it adapts to any window size including native
-fullscreen. The preview refreshes automatically as you edit."
+  "Open a live preview of the current buffer, docked on the right.
+Markdown buffers are rendered natively; Org buffers are exported to
+HTML by Emacs. Emacs reserves a blank side window on the right and the
+native preview pane is drawn over it, so it adapts to any window size
+including native fullscreen. The preview refreshes as you edit."
   (interactive)
   (let ((width (or (mac-plugin-markdown--reserve-space)
                    mac-plugin-markdown-preview-width)))
@@ -260,7 +294,9 @@ fullscreen. The preview refreshes automatically as you edit."
     (setq mac-plugin-markdown--scroll-fraction -1.0)
     (swift-markdown-preview-set-theme mac-plugin-markdown-preview-theme)
     (swift-markdown-preview-set-width (float width))
-    (swift-markdown-preview-open (mac-plugin-markdown--buffer-string)))
+    (if (mac-plugin-preview--org-p)
+        (swift-preview-open-html (or (mac-plugin-preview--org-to-html) ""))
+      (swift-markdown-preview-open (mac-plugin-markdown--buffer-string))))
   (add-hook 'after-change-functions #'mac-plugin-markdown--schedule-refresh nil t)
   (add-hook 'window-size-change-functions #'mac-plugin-markdown--sync-width)
   (add-hook 'post-command-hook #'mac-plugin-markdown--scroll-sync))
